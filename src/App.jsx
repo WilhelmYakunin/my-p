@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import Docxtemplater from 'docxtemplater';
+import PizZip from 'pizzip';
+import PizZipUtils from 'pizzip/utils/index.js';
+import { saveAs } from 'file-saver';
+import expressionParser from 'docxtemplater/expressions';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+function loadFile(url, callback) {
+  PizZipUtils.getBinaryContent(url, callback);
 }
 
-export default App
+export const App = class App extends React.Component {
+  render() {
+    const generateDocument = () => {
+      loadFile(
+        '../public/template.doc',
+        function (error, content) {
+          if (error) {
+            throw error;
+          }
+          const zip = new PizZip(content);
+          const doc = new Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+            parser: expressionParser,
+          });
+          doc.render({
+            first_name: 'щщщщщ',
+            last_name: 'аывывавыаыв',
+            organization: {
+              companyName: 'шШШШШШШ',
+            },
+            phone: '0652455478',
+            description: 'New Website',
+          });
+          const out = doc.getZip().generate({
+            type: 'blob',
+            mimeType:
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          }); //Output the document using Data-URI
+          saveAs(out, 'putput.docx');
+        }
+      );
+    };
+
+    return (
+      <div className="p-2">
+        <h1>Test docxtemplater</h1>
+        <button onClick={generateDocument}>Generate document</button>
+        <p>Click the button above to generate a document using ReactJS</p>
+        <p>
+          You can edit the data in your code in this example. In your app, the
+          data would comgfddatabase for example.
+        </p>
+      </div>
+    );
+  }
+};
+
+export default App;
